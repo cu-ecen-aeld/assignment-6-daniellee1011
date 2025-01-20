@@ -1,0 +1,38 @@
+name: Yocto Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.YOCTO_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Clone aesd-assignments Repo
+        run: |
+          git clone git@github.com:cu-ecen-aeld/aesd-assignments.git
+
+      - name: Install Required Packages
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+          build-essential chrpath diffstat gawk texinfo libncurses5-dev \
+          wget python3-pip
+
+      - name: Start Yocto Build
+        run: |
+          ./build.sh
+
